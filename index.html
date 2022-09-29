@@ -22,44 +22,90 @@
 <div class="nd-pageheader">
  <div class="container">
  <h1 class="lead">
- <nobr class="widenobr">Your Project Name</nobr>
+ <nobr class="widenobr">Monocular Depth Estimation using Vision Transformers</nobr>
  <nobr class="widenobr">For CS 7150</nobr>
  </h1>
  </div>
 </div><!-- end nd-pageheader -->
 
 <div class="container">
-<div class="row">
-<div class="col justify-content-center text-center">
-<h2>Are Artificial Neural Networks Modular?</h2>
-<p>This is a great place to pose the big question that interests your group.</p>
-</div>
-</div>
-<div class="row">
-<div class="col">
+    <div class="row">
+      <div class="col justify-content-center text-center">
+        <h2>What are vision transformers, how has transformers become better at solving depth estimation with single image?</h2>
+        <p>Is AI able to solve problem which humans can't naturally?</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
 
+
+<h2>Motivation</h2>
+<p>Depth estimation from images is present in nature. How our eyes are aligned plays an important role in estimating depth. 
+Stereo Vision in nature is often referred to as stereopsis. For predators, the eyes are aligned in such a way that there is a lot of 
+overlap between the left eye image and the right eye image. Based on triangulation, the predators sense the depth of things they see. 
+Whereas in animals that are prey, the eyes are aligned in such a way that they have a greater field of view and less overlapping between 
+the left and right eye images, this is called monocular vision where most of the time the two eyes are on the opposites of the head. 
+In this case, depth perception is limited. Even if we perform an experiment where we close one of the eyes, we will find it hard to perceive depth.</p>
+
+<p>Over time, a variety of deep neural networks have been able to estimate scene depth using a single image, such as 
+convolutional neural networks (CNNs), recurrent neural networks (RNNs), variational auto-encoders (VAEs), generative adversarial networks (GANs) 
+and most recently Vision Trans- formers (ViT).</p>
+                      
 <h2>Related Work</h2>
-
-<p><a href="#bottou-1990">Bottou, et al (1990) [1]</a>
-wrote a cool paper which, as an example, could be the focus of your project,
-and this is a great place to talk about the prior work.
-They claimed that neural networks could be expressed as a modular architecture,
-and in this project you explore their claim in detail by implementing a new modular
-framework for creating neural networks that we call <em>Torch</em>.  (Actually,
-Torch really was developed ten years after Bottou's paper to explore his ideas.)
+  
+<p>Depth estimation is calculating the depth of each pixel value in an image relative to the camera. This task is key in applications 
+such as inferring scene geometry from 2D images, autonomous driving, human pose estimation and AR. Many of the early algorithms 
+for depth estimation have utilized geometry based methods on stereo images to obtain successful results. Structure from Motion [1] 
+is one such method where 3D structures are reconstructed using 2D image sequences. These geometric methods rely on image pairs or 
+sequences for measuring depth values.
 </p>
+
+<p>Monocular depth estimation has gained more attention due to the limitations of depth estimation from stereo images such as occlusions 
+and increased applications of monocular cameras due to its low cost. With the rapid growth in Deep Learning, 
+many deep neural networks [2] have been effectively utilized for monocular depth estimation. Eigen et. al [3] first used CNNs 
+for monocular depth estimation. Their network had two stacks, a coarse-scale network that predicts the depth of the scene at 
+a global level which is then refined within local regions by a fine-scale network. More recently, Guizilini et. al [4] proposed 
+a model, PackNet that introduced 3D packing and unpacking blocks to preserve and recover important spatial information for 
+depth estimation.
+</p>
+      
+<p>Zhao et al [5] propose a framework integrating convolutions and vision transformer blocks with a claim that the performance of 
+CNN based frameworks is restricted by the limited receptive field of CNNs. The proposed Monocular Vision Transformer (MonoViT) 
+framework has a DepthNet and a PoseNet for depth prediction and pose estimation respectively and trained through image reconstruction
+losses.
+</p>
+
+
+<h2>Proposal</h2>
+<p>What we want at the end of the project is to get a sense of how deep neural networks can estimate scene depth using a single image. 
+We propose to reproduce the works from the paper that uses a vision transformer [5] and build a solution based on CNN as well. Self-attention leads 
+to a different means of perception within the algorithms. In CNN, we start off being very local and slowly get a global perspective. A CNN recognizes 
+an image pixel by pixel, identifying features like corners or lines by building its way up from the local to the global. But in transformers, 
+with self-attention, even the very first layer of information processing makes connections between distant image locations.
+</p>
+                         
+<p>We would visualize how the features get generated at different levels of the two models by tapping into intermediate layers. We would also 
+perform multiple experiments to understand the effects of changing the size, learning rate, and other hyperparameters of the model.
+</p>
+
+<p>Datasets that will be used to train and perform the experiments would be KITTI and NYU-Depth V2. At the end of the experiments, 
+we will build a pipeline to test real-time depth estimation from the live stream of a web camera.
+</p>                       
 
 <h3>References</h3>
 
-<p><a name="bottou-1990">[1]</a> <a href="https://papers.baulab.info/Bottou-1990.pdf"
-  >L&eacute;on Bottou and Patrick Gallinari.
-  <em>A framework for the cooperation of learning algorithms.</em></a>
-  Advances in neural information processing systems 3 (1990).
-</p>
+<p><a href="https://ieeexplore.ieee.org/document/44067">[1]</a> U. R. Dhond, J. K. Aggarwal, Structure from stereo-a review, in IEEE Transactions on Systems, Man, and Cybernetics, 1989</p>
+<p><a href="https://arxiv.org/pdf/2003.06620.pdf">[2]</a> Zhao, C., Sun, Q., Zhang, C., Tang, Y., & Qian, F, Monocular depth estimation based on deep learning: An overview, in Science China Technological Sciences, 2020</p>
+<p><a href="https://arxiv.org/pdf/1406.2283.pdf">[3]</a> Eigen, D., Puhrsch, C., Fergus, R.: Depth map prediction from a single image using a multi-scale deep network. In: NIPS, 2014</p>
+<p><a href="https://arxiv.org/pdf/1905.02693.pdf">[4]</a> Guizilini, V.C., Ambrus, R., Pillai, S., & Gaidon, A., 3D Packing for Self-Supervised Monocular Depth Estimation, IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 2020</p>
+<p><a href="https://arxiv.org/pdf/2208.03543v1.pdf">[5]</a> Zhao, C., Zhang, Y., Poggi, M., Tosi, F., Guo, X., Zhu, Z., Huang, G., Tang, Y., & Mattoccia, S., MonoViT: Self-Supervised Monocular Depth Estimation with a Vision Transformer. ArXiv, abs/2208.03543, 2022</p>
+                                                       
 
 <h2>Team Members</h2>
-                                                   
-<p>Ashwin Unnikrishnan, Tharini Padmagirisan</p>
+<ul>
+  <li><a href="https://www.linkedin.com/in/tharinipadmagirisan/">Tharini Padmagirisan</a></li>
+  <li><a href="https://www.linkedin.com/in/ashwinunnikrishnan/">Ashwin Unnikrishnan</a></li>
+</ul>
 
   
 </div><!--col-->
