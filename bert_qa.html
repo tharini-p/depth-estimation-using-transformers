@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Your Project Name</title>
+<meta property="og:title" content=Your Project Name" />
+<meta name="twitter:title" content="Your Project Name" />
+<meta name="description" content="Your project about your cool topic described right here." />
+<meta property="og:description" content="Your project about your cool topic described right here." />
+<meta name="twitter:description" content="Your project about your cool topic described right here." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" /> 
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- bootstrap for mobile-friendly layout -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+
+</head>
+<body class="nd-docs">
+<div class="nd-pageheader">
+ <div class="container">
+ <h1 class="lead">
+ <nobr class="widenobr">COVID-19 Question Answering System with BERT</nobr>
+ <nobr class="widenobr">For CS 7150</nobr>
+ </h1>
+ </div>
+</div><!-- end nd-pageheader -->
+
+<div class="container">
+    <div class="row">
+      <div class="col justify-content-center text-center">
+        <h2>Does pretraining on a medical text corpus provide an edge when answering COVID related questions?</h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+		
+		<h2>Problem Statement</h2>
+		<p>We are planning to utilize BERT to build a Question Answering model trained to answer questions from COVID related research articles. Question-Answering models are Natural Language Processing Models that can answer questions given some context, and sometimes without any context. 
+		Based on how the answer is generated, the task can be classified either as Extractive Question Answering or Generative Question Answering. In Extractive Question Answering,
+		the model extracts the answer from a context and provides it directly to the user. It is usually built with BERT-like models <a href='[1]'>[1]</a>.</p>
+
+		<p>Lee et. al <a href='[2]'>[2]</a> introduced the BioBERT model where they have adapted the pre-trained language model BERT for biomedical corpora from PubMed and PMC. We are planning to build a 
+		QA model utilizing the BioBERT model to <strong>explore if pretraining on a medical text corpus provides an edge when answering COVID related questions.</strong>
+		</p>
+
+		<h2>Related Work</h2>
+		<p>BERT (Bidirectional Encoder Representations from Transformers) <a href='[3]'>[3]</a>  is based on Transformers, trained using the Transformer Encoder architecture, with Masked Language Modelling (MLM) 
+		and the Next Sentence Prediction (NSP) pre-training objective. It is designed to pre-train deep bidirectional representations from an unlabeled text by jointly conditioning on both the left and right contexts. 
+		The pre-trained BERT model can be fine-tuned with an additional output layer to create models for a wide range of NLP tasks.</p>
+		
+		<p>To perform the QA task we need to add a question-answering head on top of the BERT model to find the start token and end token of an answer for a given paragraph. 
+		Inside the question answering head there are two sets of weights, one for the start token and another for the end token. They have the same dimensions as the output embeddings.</p>
+		
+		<p>The output embedding of every token in the text is fed into this head. A dot product is computed between the start weights and the output embeddings. Then the softmax activation is applied to produce a 
+		probability distribution over all of the words.The word with the highest probability is picked as the start token. The same process is repeated for the end token.</p>
+		
+		<table style="width: 100%;margin-bottom: 30px;">
+                <tr>
+                    <td><img style="width: 100%;height: 100%;" alt="" src="img/start_token_classification.png"></img>
+                        <figcaption>Start Token Classifiers <a href="https://mccormickml.com/2020/03/10/question-answering-with-a-fine-tuned-BERT/#part-1-how-bert-is-applied-to-question-answering">(Source)</a> 
+                        </figcaption>
+                    </td>        </tr>
+                </table>
+				
+				
+		<table style="width: 100%;margin-bottom: 30px;">
+                <tr>
+                    <td><img style="width: 100%;height: 100%;" alt="" src="img/end_token_classification.png"></img>
+                        <figcaption>End Token Classifiers <a href="https://mccormickml.com/2020/03/10/question-answering-with-a-fine-tuned-BERT/#part-1-how-bert-is-applied-to-question-answering">(Source)</a> 
+                        </figcaption>
+                    </td>        </tr>
+                </table>
+		
+		<h2>Dataset</h2>
+		<p>The Question Answering model requires data in the SQuAD (Stanford Question Answering Dataset) format. SQuAD is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, 
+		where the answer to every question is a segment of text from the corresponding reading passage, or the question might be unanswerable.</p>
+		
+		<p>For our project, we plan to use the COVID-QA <a href='[4]'>[4]</a> dataset built using the CORD-19 <a href='[5]'>[5]</a> dataset. The dataset consists of a collection of work of several Researchers and its analysis. It consists of around 59 thousand papers and around 
+		41 thousand full texts incorporating papers distributed in more than 3200 journals. The COVID-QA dataset has 147 scientific articles mostly related to COVID-19 selecetd from CORD-19 and annotated by experts in SQuAD style fashion where 
+		annotators marked text as answers and formulate corresponding questions.</p>
+		
+		<p>Some example questions-answers in the dataset:</p>
+		<ul>
+		<li><p>Question: What is the main cause of HIV-1 infection in children?</p>
+		<p>Answer: Mother-to-child transmission (MTCT) is the main cause of HIV-1 infection in children worldwide</p></li>
+		<li><p>Question: What plays the crucial role in the Mother to Child Transmission of HIV-1 and what increases the risk</p>
+		<p>Answer: DC-SIGNR plays a crucial role in MTCT of HIV-1 and that impaired placental DC-SIGNR expression increases risk of transmission</p></li>
+		</ul>
+
+		<h2>Plan</h2>
+		<p>We are planning to categorize our dataset based on topics in the text, question semantics etc. We would train both the models by holding off one of the categories.</p>
+		<ul>
+		<li><p><b>Case 1:</b> We would hold one of the topics out while training the dataset and test with all the topics to compare the model performances on this unseen topic.</p></li>
+		<li><p><b>Case 2:</b> We would hold one of question types out while training the dataset and test with all the question types to compare the model performances on this unseen question type.</p></li>
+		</ul>
+		
+		<p>One of our hypotheses is that the BioBert model would perform better than the other model in case 1. With these experiments we would visualize the performance of the BERT models in the Question-Answering task and also explore how impactful is pre-training with biomedical corpora.</p>
+
+
+
+      <h2> References</h2>
+		<p><a name="[1]">[1]<a href="https://huggingface.co/tasks/question-answering">
+            https://huggingface.co/tasks/question-answering</a> </p>
+		<p><a name="[2]">[2]<a href="https://arxiv.org/ftp/arxiv/papers/1901/1901.08746.pdf">
+            BioBERT: a pre-trained biomedical language representation model for biomedical text mining</a> </p>
+		<p><a name="[3]">[3]<a href="https://arxiv.org/pdf/1810.04805v2.pdf">
+            BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding</a> </p>
+		<p><a name="[4]">[4]<a href="https://aclanthology.org/2020.nlpcovid19-acl.18.pdf">
+            COVID-QA: A Question Answering Dataset for COVID-19</a> </p>
+		<p><a name="[5]">[5]<a href="https://github.com/allenai/cord19">
+            The COVID-19 Open Research Dataset (CORD-19)</a> </p>
+	  
+		<h2>Team Members</h2>
+		<ul>
+		<li><a href="https://www.linkedin.com/in/tharinipadmagirisan/">Tharini Padmagirisan</a></li>
+		<li><a href="https://www.linkedin.com/in/ashwinunnikrishnan/">Ashwin Unnikrishnan</a></li>
+		</ul>
+	  
+	  
+	  
+	  </div>
+      <!--col-->
+    </div>
+    <!--row -->
+  </div> <!-- container -->
+
+  <footer class="nd-pagefooter">
+    <div class="row">
+      <div class="col-6 col-md text-center">
+        <a href="https://cs7150.baulab.info/">About CS 7150</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+<script>
+  $(document).on('click', '.clickselect', function (ev) {
+    var range = document.createRange();
+    range.selectNodeContents(this);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+  // Google analytics below.
+  window.dataLayer = window.dataLayer || [];
+</script>
+
+</html>
