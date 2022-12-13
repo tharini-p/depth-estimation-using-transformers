@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<title>Your Project Name</title>
+<meta property="og:title" content=Your Project Name" />
+<meta name="twitter:title" content="Your Project Name" />
+<meta name="description" content="Your project about your cool topic described right here." />
+<meta property="og:description" content="Your project about your cool topic described right here." />
+<meta name="twitter:description" content="Your project about your cool topic described right here." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" /> 
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- bootstrap for mobile-friendly layout -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
+<link href="style.css" rel="stylesheet">
+
+</head>
+<body class="nd-docs">
+<div class="nd-pageheader">
+ <div class="container">
+ <h1 class="lead">
+ <nobr class="widenobr">Understanding BERT for Question-Answering</nobr>
+ <nobr class="widenobr">For CS 7150</nobr>
+ </h1>
+ </div>
+</div><!-- end nd-pageheader -->
+
+<p>
+          <a href="https://github.com/tharini-p/bert-covid-qa">Click here for Code and Results</a>
+ </p>
+
+<h2>Abstract</h2>
+<p>In this study, we built a Question-Answering (QA) system for COVID related questions using two BERT models BERT base and BioBERT in order to compare the predictions and explore if pretraining with medical articles is effective 
+and how the attention mechanism differs between the two models. Our first experiment used cosine-similarity based reader-retriever architecture to get the context for the QA model from a pool of more than 40 thousand research
+ articles. For our second experiment, we used two different SQuAD format datasets to finetune BERT and BioBERT to compare their performance. We visualized the attention matrices for BERT and BioBERT in both experiments. 
+ In addition, we also measured the CO<sub>2</sub> emission in grams per model for a few different BERT models to explore if a 100% accurate model is holistically always the best
+</p>
+
+
+                      
+<h2>1 Introduction</h2>
+ 
+ 
+<p> BERT (Biderictional Encoder Representations from Transformers) is a transformers based language representation model [1] that has broken many records 
+for how well the models can handle language-based tasks. The pre-trained BERT models can be utilized for many downstream tasks such as Natural Language Inference, 
+Named Entity Recognition, Question Answering / Reading Comprehension.
+</p>
+
+<p>
+We have implemented and experimented with two different BERT models, BERT base and BioBERT in this study to understand their attention mechanism with respect to one of 
+the downstream tasks, Question Answering (QA). We built a QA system for answering COVID related questions utilizing the research articles available via CORD-19 on Kaggle [2]. 
+In addition to comparing the accuracy scores between the models, we also visualized the attention matrices for both the models. We also wanted to explore how the models would perform on an out-of-domain dataset, 
+especially how a model like BioBERT that is pretrained on medical articles would answer questions from a different domain such as movies and explore how the performance varies before and after fine-tuning the models. 
+</p>
+
+<h2>2 Approach</h2>
+
+<h3>2.1 BERT Architecture</h3>
+
+<p>
+BERT is based on Transformers, trained using the Transformer Encoder architecture, with Maked Language Model (MLM) and Next Sentence Prediction (NSP) pre-training objectives. 
+There are two steps in the framework, <em>pre-training</em> and <em>fine-tuning.</em>
+</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/bert-architecture.png"></img>
+        <figcaption>Figure 1: Pre-training and fine-tuning procedures for BERT. Image obtained from [1]
+        </figcaption>
+    </td>        </tr>
+</table>
+
+<p>
+Fine-tuning of BERT takes much less time than pre-training the models. In fact, the recommended number of epochs for fine-tuning for small datasets is 2-4 [1]. 
+The authors have also observed that large datasets (100k+ examples) are far less sensitive to hyperparameters than datasets of small size.
+</p>
+
+<h3>2.2 BERT for Question-Answering</h3>
+
+<p>
+There are essentially two variations of the QA task, Extractive QA and Generative QA. In Extractive QA, the model extracts answer from a given context. This is similar to 
+Reading Comprehension. The model identifies answers as spans of text within the context [3]. In Generative QA, the model generates answers as free text based on the given 
+context and there is also a variant where context is not given. The encoder only models like BERT perform better in the case of extractive QA than generative QA.
+</p>
+
+<p>
+The QA models can also be differentiated based on the domain the questions are answered from. In closed domain, the questions and answers are restricted to a specific domain 
+like in this study where a QA system for COVID related questions is built. In open domain, there is no such domain restriction.
+</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/extractive-qa.png"></img>
+        <figcaption>Figure 2: Extractive Question-Answering (Sample Question from SQuAD 1.1)
+        </figcaption>
+    </td>        </tr>
+</table>
+
+<p>
+To perform the QA task we need to add a question-answering head on top of the pre-trained BERT model to find the start token and end token of an answer in a given paragraph. 
+The question and the reference context are packed together and passed to the model. The two pieces of texts are separated by the [SEP] token. We can use BERT’s tokenizers 
+(we have utilized the Hugging Face’s implementation of tokenizers for our experiments) to create these special tokens.
+</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/bert-qa.png"></img>
+        <figcaption>Figure 3: BERT QA. Image obtained from [4]
+        </figcaption>
+    </td>        </tr>
+</table>
+
+<p>
+We can achieve the essential step of assigning numerical values to words using a tokenizer. All the words can be represented by unique indices and an embedding is a vector for each index. 
+Tokenizer splits strings into substrings, converts strings to ids and back, adds and manages special tokens [5]. Every sequence of text starts with the special classification token [CLS] 
+and sentences in a text sequence are separated by the [SEP] token. BERT uses “wordpiece” embeddings where the words are divided into a limited set of sub-word units [6]. This helps the model 
+handle unfamiliar words by breaking them down into familiar words. The output embedding of every token in the text is fed into the QA head.
+</p>
+
+<p>
+In extractive QA, as we need to highlight the span of the answer within the text, this is represented as predicting the probabilities for each token being the start token and the end token of the answer. 
+Inside the question answering head there are two sets of weights, one for the start token and another for the end token. They have the same dimensions as the output embeddings. The final embedding of every 
+token in the text is fed into the start token classifier. Dot product between the ‘start’ weights and the word embeddings are computed then softmax activation function is applied to obtain a probability 
+distribution over all the words. The word with the highest probability is selected as the ‘start’ token. The same process is repeated to obtain the ‘end’ token with the ‘end’ token weights.
+</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/bert-token-classifiers.png"></img>
+        <figcaption>Figure 4: BERT Start and End Token Classifiers. Image obtained from [4]
+        </figcaption>
+    </td>        </tr>
+</table>
+
+
+<h3>2.3 SQuAD format</h3>
+
+<p>
+The Stanford Question Answer Dataset (SQuAD) is a reading comprehension dataset [7] consisting of questions based on Wikipedia articles. The answer to each question is span of text in the given context passage. 
+</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/squad-format.png"></img>
+        <figcaption>Figure 5: SQuAD format. Sample Question from COVID-QA
+        </figcaption>
+    </td>        </tr>
+</table>
+
+
+<p>
+We require a dataset in this format for BERT-QA models, with context to be able to highlight the span of answer. Creating a dataset like this requires annotation of answers in the context passage. 
+There are few datasets available on Hugging Face in SQuAD format such as COVID-QA, DuoRC and DROP-QA that we have used for our experiments.
+</p>
+
+
+<h2>3 Background</h2>
+
+<p>
+Our initial experiment is motivated by the research work published by Alzubi et, al where they have proposed COBERT, a COVID-19 Question Answering System Using BERT. COBERT has a retriever-reader 
+architecture where the answers are predicted by searching a corpus of corona virus-related literature made accessible through the Coronavirus Open Research Dataset Challenge (CORD-19) [8]. 
+</p>
+
+<p>
+In their proposed system, the retriever is a TF-IDF vectorizer that captures the top 500 documents with optimal scores. The second component, reader is a pre-trained BERT model on SQuAD 1.1 dev 
+dataset refines the sentences from the filtered documents. These sentences are then passed into a ranker which compares the logits scores to produce a short answer, title of the paper and source 
+article of extraction. The authors had also prepared a list of queries and answers for testing the models.
+</p>
+
+<p>
+We have followed a similar architecture for retrieving the answers from contexts. In addition to BERT base we have also used BioBERT to predict the answers. Lee et. al [9] introduced the BioBERT model 
+where they have adapted the pre-trained language model BERT for biomedical corpora from PubMed and PMC. For testing the models, we have used COVID-QA [10], a SQuAD format dataset built using the CORD-19 
+dataset. The dataset has 2019 question-answer pairs formed based on articles mostly related to COVID-19 selected from CORD-19 and annotated by biomedical experts in SQuAD style fashion. 
+</p>
+
+
+<h3>3.1 Cosine Similarity based context selection</h3>
+
+<p>
+Our pipeline has two parts, Retriever and Reader as shown in figure 7. Firstly, we processed the corona virus related literature as follows,
+</p>
+
+<ul>
+  <li>Filtered the most relevant articles, i.e., we considered only the articles containing the following keywords - <em>'novel coronavirus', 'novel-coronavirus', 
+  'coronavirus-2019',  'sars-cov-2', 'sarscov2', 'covid-19', 'covid19', '2019ncov', '2019-ncov', 'wuhan',</em> since CORD-19 is a resource of over 1,000,000 scholarly articles, 
+  including over 400,000 with full text and using all of the articles would be time-consuming
+  </li>
+  <li>Converted all words to lowercase, removed numbers, punctuations, and stopwords, and stemmed all words 
+  </li>
+</ul>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 75%;height: 75%;" alt="" src="img/sample-data.png"></img>
+        <figcaption>Figure 6: Sample data
+        </figcaption>
+    </td>        </tr>
+</table>
+
+<p>
+We created a dataframe with the cleaned text as one of the columns along with the metadata of the papers.
+</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/retriever-reader.png"></img>
+        <figcaption>Figure 7: Retriever-Reader Architecture
+        </figcaption>
+    </td>        </tr>
+</table>
+
+<p>
+Next phase is retrieval. Here we pass the question and the processed COVID-19 related literature. We pass the text through a TF-IDF vectorizer. 
+Term Frequency (TF) is the number of occurrences of a term in a document. This is an indicator of the importance of a term in a document.
+</p>
+
+<p>
+Inverse Document Frequency (IDF) is a proportion of the data the word gives i.e., it is the weight of a term. The weight is reduced if the occurrence of the term 
+is scattered throughout all the documents.
+</p>
+
+<p>
+Then the metric <em>tf-idf</em> is computed as [12],
+</p>
+
+<p>
+ <em>tf-idf(t, d) = tf(t, d) * idf(t)  --------------------------------------  (1)</em>
+</p>
+
+<p>
+and <em>idf</em> is computed as
+</p>
+
+<p>
+ <em>idf(t) = log [ n / df(t) ] + 1  ----------------------------------------  (2)</em>
+</p>
+
+<p>
+Then we compute the cosine similarity between the query and the articles in our corpus. In this experiment, we picked the top 20 articles based on cosine similarity.
+We pass the query and the top 20 articles as contexts into the reader which is a BERT model. 
+</p>
+
+<p>
+ <em>cosine similarity(A, B) = dot product(A, B) / (||A||*||B||)  ----------------------------------------  (3)</em>
+</p>
+
+<p>where A and B are text vectors.</p>
+
+<p>
+We pass the query and the top 20 articles as contexts into the reader which is a BERT model with a Question-Answering head. The model predicts an answer for each of 
+the context passed. Since we used the COVID-QA dataset for questions/contexts/answers, we don’t have an actual ground truth and so we did not compute an Exact Match 
+score or F1 score in this case. Instead, we used a similarity score called METEOR score to measure the similarity between the predicted answer and the answer available 
+in the COVID-QA dataset. METEOR metric is based on unigrams matching between the two texts compared based on their surface forms, stemmed forms, and meanings [11].
+</p>
+
+<h3>3.2 Out-of-domain testing on BERT models</h3>
+
+<p>
+In our second experiment, we wanted to explore how the BERT models performed on out-of-domain data. Among the limited number of datasets available in the SQuAD format, 
+we have built QA models with the COVID-QA [13] data and DROP-QA data. Both datasets are available on Huggingface. DROP-QA [14], Reading Comprehension Benchmark Requiring 
+Discrete Reasoning Over Paragraphs is a benchmarking dataset in which the that requires a more comprehensive understanding of the contexts to operate on the text than the prior datasets. 
+We measured the performance before and after fine-tuning for both the datasets. We computed EM and F1-scores and visualized the attention matrices in all the cases.
+</p>
+
+<h2>4 Results</h2>
+
+<p> All our codes and results are available <a href="https://github.com/tharini-p/bert-covid-qa">here.</a>
+</p>
+
+<p> The models we used for our experiments are BERT base and BioBERT, both fine-tuned on SQuAD 1.1.
+</p>
+
+<p>BERT base has 12 layers, 12 attention heads and has 110M parameters. The version of the BioBERT model used is a BERT base model as well pre-trained on PubMed articles. 
+We were able to use the models available on Hugging Face,
+</p>
+<ul>
+  <li><em>Seongkyu/bert-base-cased-finetuned-squad</em></li>
+  <li><em>gerardozq/biobert_v1.1_pubmed-finetuned-squad</em></li>
+</ul>
+
+<p>For visualizing the attention matrices, we have utilized the Captum interpretability library [15].
+</p>
+
+<h3>4.1 METEOR scores and attention visualization</h3>
+
+<p>
+As explained previously, we did not measure EM/F1 scores for our first experiment. Instead we extracted the answers for a few questions and computed METEOR score for the extracted answer. 
+Then we visualized the attention matrix for one of the questions.
+</p>
+
+<p>
+All the steps are same for both the models. We first passed the query and the document corpus to get the top 20 contexts. Then passed the contexts to the BERT-QA model to get the answers. Then compared the extracted answer 
+to the answer available in COVID QA. We repeated the same steps for both models before and after fine-tuning on COVID-QA. We fine-tuned on COVID-QA for 3 epochs.
+</p>
+
+
+<h3>4.1.1 BERT base without fine-tuning on COVID-QA</h3>
+
+
+<p>
+Our first model is BERT base fine-tuned on SQuAD but not fine-tuend on COVID-QA. Let us take a look at a few examples,
+</p>
+
+<p>Example 1</p>
+
+<p>Question: What are the most common symptoms of COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “Fever and cough”</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.1_pred_1.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Example 2</p>
+
+<p>Question: How long is the incubation time for COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “between 2 and 14 days”</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.1_pred_2.png"></img>
+    </td>        </tr>
+</table>
+
+<p>The contexts are different, i.e., the context selected by cosine similarity is different from the context chosen in the annotated COVID-QA dataset which 
+is causing the difference in the answers.
+</p>
+
+<p> Now let us visualize the attention matrices. The output_attentions represent the attention probabilities of all 12 layers and 12 heads. It is the softmax-normalized 
+dot-product between the key and query vectors. According to [16], it has been used as an importance indicator of how much a token attends to another token in the given text.
+</p>
+
+<p>Let us examine the token-to-token attention scores for all heads in the layers 1 and 12. We have restricted to only the question tokens in order to produce a simpler visualization.
+</p>
+
+<p>Layer 1:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.1_layer1.png"></img>
+    </td>        </tr>
+</table>
+
+<p>Layer 12:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.1_layer12.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>From the above visualizations, we can see the how the token-to-token attention changes as we move across the layers, particularly with heads 6,8 and 9. In most of the heads the attention is 
+high in the [CLS] token.
+</p>
+
+<p>Then, we visualize the summary of each layer across all the heads,
+</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.1_summmary.png"></img>
+    </td>        </tr>
+</table>
+
+
+<h3>4.1.2 BERT base with fine-tuning on COVID-QA</h3>
+
+<p>Next, we fine-tuned BERT base fine-tuned on SQuAD on COVID-QA. Let us take a look at a few examples,
+</p>
+
+
+<p>Example 1</p>
+
+<p>Question: What are the most common symptoms of COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “Fever and cough”</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.2_pred_1.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Example 2</p>
+
+<p>Question: How long is the incubation time for COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “between 2 and 14 days”</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.2_pred_2_1.png"></img>
+    </td>        </tr>
+</table>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.2_pred_2_2.png"></img>
+    </td>        </tr>
+</table>
+
+<p>We have contracted some answers for ease of display.</p>
+
+<p>Looking at the extracted answers, we can see how the model extracted texts about incubation period from the given context. 
+While in some cases, the extracted answer is much more longer than the answer in COVID-QA which has caused the score to be lower in such cases.
+</p> 
+
+
+<p>Now, let us visualize the token-to-token attention scores for all heads in the layers 1 and 12. We have restricted to only the question tokens in order to produce a simpler visualization.
+</p>
+
+
+<p>Layer 1:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.2_layer1.png"></img>
+    </td>        </tr>
+</table>
+
+<p>Layer 12:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.2_layer12.png"></img>
+    </td>        </tr>
+</table>
+
+<p>
+Summarized visualization of the layers across all attention heads
+</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.2_summary.png"></img>
+    </td>        </tr>
+</table>
+
+<h3>4.1.3 BioBERT base without fine-tuning on COVID-QA</h3>
+
+<p>Now, let us take a look at a few examples of answers extracted by the BioBERT model that was not fine-tuned on COVID-QA
+</p>
+
+
+<p>Example 1</p>
+
+<p>Question: What are the most common symptoms of COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “Fever and cough”</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.3_pred_1.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Example 2</p>
+
+<p>Question: How long is the incubation time for COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “between 2 and 14 days”</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.3_pred_2.png"></img>
+    </td>        </tr>
+</table>
+
+<p>We can see from this example how the scores are only an indicator of correctness and they don't refelect the model performance in our case as the contexts differ from the validation data used.
+Based on the fed context, the model has extracted a valid answer, 2.87 days to 17.6 days</p>
+
+<p>
+Now, let us visualize the token-to-token attention scores for all heads in the layers 1 and 12. We have restricted to only the question tokens in order to produce a simpler visualization.
+</p>
+
+<p>Layer 1:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.3_layer1.png"></img>
+    </td>        </tr>
+</table>
+
+<p>Layer 12:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.3_layer12.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Visualizing the summary of attention matrices of all layers across all heads</p>
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.3_summary.png"></img>
+    </td>        </tr>
+</table>
+
+
+<h3>4.1.4 BioBERT base with fine-tuning on COVID-QA</h3>
+
+<p>Next, we fine-tuned BioBERT fine-tuned on SQuAD on COVID-QA. Let us take a look at a few examples,
+</p>
+
+
+<p>Example 1</p>
+
+<p>Question: What are the most common symptoms of COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “Fever and cough”</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.4_pred_1.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Example 2</p>
+
+<p>Question: How long is the incubation time for COVID19?</p>
+
+<p>Answer and METEOR Score: (20 answers predicted from the 20 contexts)</p>
+
+<p>Answer in COVID-QA: “between 2 and 14 days”</p>
+
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/1.4_pred_2.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>From the above examples, we can see how the BioBERT model, that is pre-trained on PubMed articles has produced more 
+meaningful answers than the BERT Base model</p>
+
+
+<p>Now, let us visualize the token-to-token attention scores for all heads in the layers 1 and 12. We have restricted to only the question tokens in order to produce a simpler visualization.
+</p>
+
+<p>Layer 1:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.4_layer1.png"></img>
+    </td>        </tr>
+</table>
+
+<p>Layer 12:</p>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.4_layer12.png"></img>
+    </td>        </tr>
+</table>
+
+
+<p>Visualizing the summary of attention matrices of all layers across all heads</p>
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 100%;height: 100%;" alt="" src="img/1.4_summary.png"></img>
+    </td>        </tr>
+</table>
+
+<p>From the predicted answers and the METEOR scores, we can see how without finetuning the models predicted [CLS] as answer in most of the cases. 
+We can also see that BioBERT has produced more meaningful answers to the questions after fine-tuning.
+</p>
+
+<p>While the visualizations help us understand how the attention mechanism changes between the layers, we were not able to arrive at a conclusion only based on the 
+question tokens. In the summary visualizations of all four cases, we see high attention along the diagonals of the matrices. Visualizing across the contexts would probably 
+give us a better insight regarding the attention mechanism.
+</p>
+
+
+<h3>4.2 EM score, F1 score and attention visualization</h3>
+
+<p>Here, we have evaluated BERT and BioBERT as QA models on two datasets - COVID QA and DROP QA. We measured the EM/F1 scores and visualized the attention matrices for one of the questions.
+</p>
+
+<p>We repeated the steps described in 4.1 for both models before and after fine-tuning on COVID-QA and DROP-QA respectively. We fine-tuned the models on each dataset for 3 epochs.
+</p>
+
+<h3>4.2.1 On COVID-QA</h3>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/2.1_score.png"></img>
+    </td>        </tr>
+</table>
+
+<h3>4.2.2 On DROP-QA</h3>
+
+<table style="width: 100%;margin-bottom: 30px;">
+<tr>
+    <td><img style="width: 50%;height: 50%;" alt="" src="img/2.2_score.png"></img>
+    </td>        </tr>
+</table>
+
+<p>Fine-tuning here refers to fine-tuning on COVID-QA/DROP-QA datasets. The models are already fine-tuned on SQuAD before we do another
+fine-tuning on the respective datasets</p>
+
+<p>We can observe that in 3 out of the 4 cases, finetuning (on respective datasets, in addition to the SQuAD finetuning) has increased accuracy and the F1 score of the BioBERT model is higher 
+in case of COVID-QA than DROP-QA. One other aspect we need to consider is the size of the dataset. DROP-QA is a huge dataset so we have used only a sample of the dataset. When we initially 
+performed the experiment, the fine-tuned BERT Base model produced lower scores than the model without fine-tuning. Suspecting overfitting, we increased the sample size used for fine-tuning 
+and the accuracy with fine-tuning increased. We are now observing a similar case with COVID QA and BERT Base. But COVID-QA is a dataset of limited size, 2019 questions and answers. So we did not 
+make any changes to the training or fine-tuning.
+</p>
+
+<p>The visualization of attention matrices are available in this <a href="https://github.com/tharini-p/bert-covid-qa/blob/main/BERT_BioBERT_Out_of_domain_Question_Answering.ipynb">notebook.</a> We were not able to arrive at a conclusion only based on the question tokens. Visualizing across the contexts might give 
+us a better insight regarding the attention mechanism of the models.
+</p>
+
+
+
+<h2>5 Conclusion</h2>
+<p>We utilized two BERT models that were finetuned on SQuAD, BERT base and BioBERT to build an Extractive Question Answering system. In the process, we explored two different methods of building a QA system, 
+one where we used a retriever-reader architecture to get the contexts from which we extract answers. Another method was to directly use a SQuAD format dataset. 
+</p>
+                         
+<p>While we used the idea of a retriever-reader architecture for COVID-QA from the cited research paper [1], we added a comparison between BERT and BioBERT. In addition, we also visualized the attention matrices 
+of the models. In this experiment, we observed with the help of a few examples how finetuning on COVID-QA helped both the models in producing better results. We also observed how BioBERT produced more meaningful answers 
+with COVID related questions. In addition, we also built a QA system where we had used the SQuAD format datasets where we measured the EM and F1 scores of the models before and after finetuning on each dataset. 
+While we visualized the attention matrices in all cases, we were not able to arrive at a conclusion based on the question tokens. Visualizing across the contexts might give us a better insight 
+regarding the attention mechanism of the models.
+</p>
+
+
+
+<h3>References</h3>
+
+
+<p><a href="https://arxiv.org/abs/1810.04805">[1]</a> Devlin, J., Chang, M., Lee, K., Toutanova, K., BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, 2018</p>
+<p><a href="https://www.kaggle.com/datasets/allen-institute-for-ai/CORD-19-research-challenge">[2]</a>  The COVID-19 Open Research Dataset (CORD-19) on Kaggle, 2022(updated version)</p>
+<p><a href="https://huggingface.co/course/chapter7/7?fw=tf">[3]</a> Blog post titled "Question answering" on Hugging Face</p>
+<p><a href="https://mccormickml.com/2020/03/10/question-answering-with-a-fine-tuned-BERT/#part-1-how-bert-is-applied-to-question-answering">[4]</a> Blog post titled "Question Answering with a Fine-Tuned BERT" by Chris McCormick, 2020</p>
+<p><a href="https://huggingface.co/docs/transformers/main_classes/tokenizer">[5]</a> Documentation of "Tokenizer" on Hugging Face</p>
+<p><a href="https://arxiv.org/pdf/1609.08144.pdf">[6]</a> Wu, Y., et al., Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation, 2016</p>
+<p><a href="https://rajpurkar.github.io/SQuAD-explorer/">[7]</a> Rajpurkar, P., et al., Stanford Question Answering Dataset, 2016</p>
+<p><a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8220121/">[8]</a> Alzubi, J., et al., COBERT: COVID-19 Question Answering System Using BERT, 2021</p>
+<p><a href="https://arxiv.org/ftp/arxiv/papers/1901/1901.08746.pdf">[9]</a> Lee, J., et al., BioBERT: a pre-trained biomedical language representation model for biomedical text mining, 2019</p>
+<p><a href="https://aclanthology.org/2020.nlpcovid19-acl.18.pdf">[10]</a> M¨oller, T., et al., COVID-QA: AQuestion Answering Dataset for COVID-19, 2020</p>
+<p><a href="https://huggingface.co/spaces/evaluate-metric/meteor">[11]</a> Blog post titled "Metric: meteor" on Hugging Face</p>
+<p><a href="https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.TfidfTransformer.html#:~:text=The%20formula%20that%20is%20used,document%20frequency%20of%20t%3B%20the">[12]</a> Documentation of "sklearn.feature_extraction.text.TfidfTransformer" on scikit-learn</p>
+<p><a href="https://huggingface.co/datasets/covid_qa_deepset">[13]</a> Documentation of COVID QA dataset on Hugging Face</p>
+<p><a href="https://huggingface.co/datasets/drop">[14]</a> Documentation of DROP QA dataset on Hugging Face</p>
+<p><a href="https://captum.ai/docs/introduction">[15]</a> Documentation of Captum interpretability library</p>
+<p><a href="https://aclanthology.org/W19-4828.pdf">[16]</a> Clark, K., et al., What does BERT look at? AnAnalysis of BERT’s Attention, 2019</p>
+
+
+
+<h3>Code Links</h3>
+<ul>
+  <li><a href="https://github.com/tharini-p/bert-covid-qa/blob/main/BERT_BioBERT_QA_system_using_CORD_19.ipynb">COVID-19 Question-Answering System with BERT and BioBERT</a></li>
+  <li><a href="https://github.com/tharini-p/bert-covid-qa/blob/main/BERT_BioBERT_Out_of_domain_Question_Answering.ipynb">Out-of-domain Question-Answering with BERT and BioBERT</a></li>
+</ul>
+
+
+
+<h2>Team Members</h2>
+<ul>
+  <li><a href="https://www.linkedin.com/in/tharinipadmagirisan/">Tharini Padmagirisan</a></li>
+  <li><a href="https://www.linkedin.com/in/ashwinunnikrishnan/">Ashwin Unnikrishnan</a></li>
+</ul>
+
+ 
+  
+</div><!--col-->
+</div><!--row -->
+</div> <!-- container -->
+
+<footer class="nd-pagefooter">
+  <div class="row">
+    <div class="col-6 col-md text-center">
+      <a href="https://cs7150.baulab.info/">About CS 7150</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+<script>
+$(document).on('click', '.clickselect', function(ev) {
+  var range = document.createRange();
+  range.selectNodeContents(this);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+// Google analytics below.
+window.dataLayer = window.dataLayer || [];
+</script>
+</html>
