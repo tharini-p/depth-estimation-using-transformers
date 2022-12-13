@@ -46,7 +46,6 @@
 <p>In this study, we built a Question-Answering (QA) system for COVID related questions using two BERT models BERT base and BioBERT in order to compare the predictions and explore if pretraining with medical articles is effective 
 and how the attention mechanism differs between the two models. Our first experiment used cosine-similarity based reader-retriever architecture to get the context for the QA model from a pool of more than 40 thousand research
  articles. For our second experiment, we used two different SQuAD format datasets to finetune BERT and BioBERT to compare their performance. We visualized the attention matrices for BERT and BioBERT in both experiments. 
- In addition, we also measured the CO<sub>2</sub> emission in grams per model for a few different BERT models to explore if a 100% accurate model is holistically always the best
 </p>
 
 
@@ -63,7 +62,7 @@ Named Entity Recognition, Question Answering / Reading Comprehension.
 We have implemented and experimented with two different BERT models, BERT base and BioBERT in this study to understand their attention mechanism with respect to one of 
 the downstream tasks, Question Answering (QA). We built a QA system for answering COVID related questions utilizing the research articles available via CORD-19 on Kaggle [2]. 
 In addition to comparing the accuracy scores between the models, we also visualized the attention matrices for both the models. We also wanted to explore how the models would perform on an out-of-domain dataset, 
-especially how a model like BioBERT that is pretrained on medical articles would answer questions from a different domain such as movies and explore how the performance varies before and after fine-tuning the models. 
+especially how a model like BioBERT that is pretrained on medical articles would answer questions from a different domain and explore how the performance varies before and after fine-tuning the models. 
 </p>
 
 <h2>2 Approach</h2>
