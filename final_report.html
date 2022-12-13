@@ -628,6 +628,10 @@ give us a better insight regarding the attention mechanism.
 <p>Here, we have evaluated BERT and BioBERT as QA models on two datasets - COVID QA and DROP QA. We measured the EM/F1 scores and visualized the attention matrices for one of the questions.
 </p>
 
+<p> Exact Match (EM) shows the number of tokens that match between the predicted answer and the ground truth answer. F1 score is computed as (2 * precision * recall) / (precision + recall) where 
+precision = number of common tokens / number of predicted tokens and recall = number of common tokens / number of ground truth tokens
+</p>
+
 <p>We repeated the steps described in 4.1 for both models before and after fine-tuning on COVID-QA and DROP-QA respectively. We fine-tuned the models on each dataset for 3 epochs.
 </p>
 
